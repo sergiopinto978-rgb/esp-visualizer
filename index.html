@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Técnico ESP Pro</title>
+    <style>
+        :root {
+            --bg-app: #f4f7f6;
+            --panel-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --primary: #2980b9;
+            --primary-light: #ebf5fb;
+            --border: #e0e0e0;
+            --accent-success: #27ae60;
+            --accent-orange: #d35400;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- CONFIG PANEL (LEFT) --- */
+        .config-panel {
+            width: 340px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.05);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .config-panel h2 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 14px;
+            background-color: var(--primary);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Labels & Inputs Layout */
+        .form-group label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Ensures Label Left, Value Right */
+            width: 100%;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        /* Toggle Rows (Checkboxes) */
+        .form-group.toggle-row {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .form-group.toggle-row label {
+            margin-bottom: 0;
+            width: auto;
+            flex-grow: 1;
+        }
+
+        /* Pills / Badges for Values */
+        .value-display {
+            font-size: 0.8rem;
+            color: #154360;
+            font-weight: 700;
+            background-color: var(--primary-light);
+            padding: 2px 8px;
+            border-radius: 12px;
+            min-width: 50px;
+            text-align: center;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .info-subtext {
+            display: block;
+            font-size: 0.7rem;
+            color: #bdc3c7;
+            text-align: right;
+            margin-top: 2px;
+            font-style: italic;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #dfe6e9;
+            border-radius: 3px;
+            outline: none;
+            margin-top: 4px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* Custom Checkbox */
+        input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Select Input */
+        select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #bdc3c7;
+            background: #fdfdfd;
+            font-family: inherit;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        /* Footer / Version */
+        .panel-footer {
+            margin-top: auto;
+            padding-top: 30px;
+            text-align: center;
+            color: #bdc3c7;
+            font-size: 0.7rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        /* --- CANVAS AREA (RIGHT) --- */
+        .canvas-area {
+            flex-grow: 1;
+            background-color: #e5e8e8;
+            display: flex;
+            justify-content: center;
+            overflow: auto;
+            position: relative;
+            padding: 40px;
+            /* Technical Grid */
+            background-image: 
+                linear-gradient(rgba(209, 213, 219, 0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(209, 213, 219, 0.5) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* SVG Styles */
+        svg {
+            background: white;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            border-radius: 4px;
+        }
+
+        text {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1"
+  }
+}
+</script>
+</head>
+
+<body>
+
+    <div class="config-panel">
+        <h2>Generador Técnico ESP</h2>
+
+        <div class="section-title">Visualización</div>
+        <div class="form-group">
+            <label>Escala General (Zoom) <span id="val-zoom" class="value-display">1.0x</span></label>
+            <input type="range" id="rng-zoom" min="0.6" max="1.5" step="0.1" value="1.0">
+        </div>
+
+        <div class="section-title">Superficie</div>
+        <div class="form-group">
+            <label>Frecuencia VSD <span id="val-hz" class="value-display">50 Hz</span></label>
+            <input type="range" id="rng-hz" min="30" max="75" step="1" value="50">
+        </div>
+
+        <div class="section-title">Pozo & Fluido</div>
+        <div class="form-group">
+            <label>Nivel de Fluido (Prof.) <span id="val-fluid" class="value-display">40 %</span></label>
+            <input type="range" id="rng-fluid" min="0" max="95" step="1" value="40">
+            <span class="info-subtext">0% = Superficie | 100% = Fondo</span>
+        </div>
+        <div class="form-group">
+            <label>PIP (psi) <span id="val-pip" class="value-display">1000 psi</span></label>
+            <input type="range" id="rng-pip" min="100" max="3000" step="50" value="1000">
+        </div>
+
+        <div class="section-title">Completamiento</div>
+        <div class="form-group">
+            <label>Cable (AWG) <span id="val-cable-size" class="value-display">#4</span></label>
+            <input type="range" id="rng-cable-size" min="2" max="6" step="1" value="4">
+            <span class="info-subtext">#2 Grueso ← → #6 Delgado</span>
+        </div>
+        <div class="form-group toggle-row">
+            <label for="chk-y-tool">Y-Tool (By-pass)</label>
+            <input type="checkbox" id="chk-y-tool">
+        </div>
+
+        <div class="section-title">Equipo de Fondo</div>
+        <div class="form-group">
+            <label>Tecnología de Motor</label>
+            <select id="sel-motor-type">
+                <option value="AMM">Asincrónico (AMM)</option>
+                <option value="PMM">Imanes Permanentes (PMM)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Potencia Motor <span id="val-hp" class="value-display">375 HP</span></label>
+            <input type="range" id="rng-hp" min="50" max="1000" step="25" value="375">
+        </div>
+        <div class="form-group">
+            <label>Etapas Bomba Upper <span id="val-stages-upper" class="value-display">60</span></label>
+            <input type="range" id="rng-stages-upper" min="0" max="400" step="10" value="60">
+        </div>
+        <div class="form-group">
+            <label>Etapas Bomba Lower <span id="val-stages-lower" class="value-display">60</span></label>
+            <input type="range" id="rng-stages-lower" min="0" max="400" step="10" value="60">
+        </div>
+        <div class="form-group toggle-row" style="background-color: #f2fcf5; border: 1px solid #d4efdf; border-radius: 4px; padding: 8px;">
+            <label for="chk-sensor" style="color: #219150; font-weight:700;">Sensor de Fondo</label>
+            <input type="checkbox" id="chk-sensor" checked>
+        </div>
+
+        <div class="panel-footer">
+            ESP TECHNICAL PRO v3.4<br>INGENIERÍA DE DETALLE
+        </div>
+    </div>
+
+    <div class="canvas-area" id="canvas-container"></div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        const config = {
+            zoom: 1.0,
+            vsdFreq: 50,
+            fluidLevel: 40,
+            pip: 1000,
+            cableSize: 4,
+            yTool: false,
+            motorType: "AMM",
+            motorHp: 375,
+            stagesUpper: 60,
+            stagesLower: 60,
+            sensor: true
+        };
+
+        // --- LÓGICA DE DIBUJO ---
+        function renderDiagram() {
+
+            // 1. DIMENSIONES
+            const BASE_WIDTH = 950;
+            const WELL_X = 400; // Centro del pozo
+            
+            const CASING_WIDTH = 220;
+            const TUBING_WIDTH = 26;
+            const ESP_WIDTH = 52;
+            
+            // Cálculos de Altura
+            const HP_FACTOR = config.motorType === "PMM" ? 0.35 : 0.55; 
+            const MOTOR_H = Math.max(90, config.motorHp * HP_FACTOR);
+            
+            // Altura Bombas
+            const PUMP_UPPER_H = config.stagesUpper > 0 ? Math.max(60, config.stagesUpper * 1.3) : 0;
+            const PUMP_LOWER_H = config.stagesLower > 0 ? Math.max(60, config.stagesLower * 1.3) : 0;
+            const PUMP_GAP = (config.stagesUpper > 0 && config.stagesLower > 0) ? 10 : 0;
+            const TOTAL_PUMP_H = PUMP_UPPER_H + PUMP_LOWER_H + PUMP_GAP;
+
+            const INTAKE_H = 55;
+            const SEAL_H = 160; 
+            const SEAL_SECTION_H = SEAL_H / 2;
+            const SENSOR_H = 80;
+            
+            const SURFACE_H = 380;
+            const TUBING_LEN = 500;
+            
+            // Offset Y-TOOL
+            const YTOOL_HEIGHT = config.yTool ? 90 : 0;
+            const YTOOL_GAP = config.yTool ? 15 : 0; // Spacing to separate Y-Tool from pump
+            
+            const TUBING_END_Y = SURFACE_H + TUBING_LEN;
+            const ESP_START_Y = TUBING_END_Y + YTOOL_HEIGHT + YTOOL_GAP;
+
+            const PUMP_Y = ESP_START_Y;
+            const INTAKE_Y = PUMP_Y + TOTAL_PUMP_H;
+            const SEAL_Y = INTAKE_Y + INTAKE_H;
+            const MOTOR_Y = SEAL_Y + SEAL_H;
+            const SENSOR_Y = MOTOR_Y + MOTOR_H;
+            
+            const ESP_BOTTOM = config.sensor ? SENSOR_Y + SENSOR_H : MOTOR_Y + MOTOR_H;
+            const RAT_HOLE = 150;
+            
+            // Alignment for Callouts (Unified Column)
+            const CALLOUT_ALIGN_X = WELL_X + 220; 
+            const CALLOUT_WIDTH = 220;
+
+            const TOTAL_HEIGHT = ESP_BOTTOM + RAT_HOLE + 100;
+            const PERF_Y = TOTAL_HEIGHT - 180;
+
+            const FLUID_Y = SURFACE_H + ((TOTAL_HEIGHT - SURFACE_H) * (config.fluidLevel / 100));
+            const PIP_PSI = config.pip;
+            
+            const CABLE_W = Math.max(6, 18 - (config.cableSize * 2));
+            const CABLE_COLOR = "#d35400"; 
+            
+            const surface = true; 
+            const vsd = true; 
+
+            // --- INICIO SVG ---
+            let svg = `<svg width="${BASE_WIDTH}" height="${TOTAL_HEIGHT}" xmlns="http://www.w3.org/2000/svg" 
+                            style="transform: scale(${config.zoom}); transform-origin: top center;">`;
+
+            // 2. DEFINICIONES
+            svg += `
+                <defs>
+                    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#6cb1e9; stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#e6f3ff; stop-opacity:1" />
+                    </linearGradient>
+
+                    <linearGradient id="geoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#000000" stop-opacity="0" />
+                        <stop offset="100%" style="stop-color:#000000" stop-opacity="0.4" />
+                    </linearGradient>
+
+                    <pattern id="patSoil" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <rect width="20" height="20" fill="#d7ccc8"/>
+                        <circle cx="2" cy="2" r="1" fill="#8d6e63" opacity="0.5"/>
+                    </pattern>
+
+                    <pattern id="patRock" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                         <rect width="40" height="40" fill="#cfd8dc"/>
+                         <path d="M0 20 L15 10 L30 25 L40 15 M5 35 L20 40 L35 30" stroke="#90a4ae" stroke-width="1" fill="none"/>
+                    </pattern>
+                    
+                    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#707b7c" />
+                        <stop offset="20%" style="stop-color:#d5dbdb" />
+                        <stop offset="50%" style="stop-color:#f4f6f7" />
+                        <stop offset="80%" style="stop-color:#d5dbdb" />
+                        <stop offset="100%" style="stop-color:#707b7c" />
+                    </linearGradient>
+
+                    <linearGradient id="sealGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#2c3e50" />
+                        <stop offset="30%" style="stop-color:#566573" />
+                        <stop offset="50%" style="stop-color:#abb2b9" />
+                        <stop offset="70%" style="stop-color:#566573" />
+                        <stop offset="100%" style="stop-color:#2c3e50" />
+                    </linearGradient>
+                    
+                    <linearGradient id="trafoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#5d6d7e" />
+                        <stop offset="100%" style="stop-color:#34495e" />
+                    </linearGradient>
+
+                    <linearGradient id="whRedGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#922b21" />
+                        <stop offset="30%" style="stop-color:#e74c3c" />
+                        <stop offset="50%" style="stop-color:#ec7063" />
+                        <stop offset="70%" style="stop-color:#e74c3c" />
+                        <stop offset="100%" style="stop-color:#922b21" />
+                    </linearGradient>
+                    
+                    <pattern id="cementPat" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+                        <rect width="8" height="8" fill="#d0d3d4"/>
+                        <circle cx="2" cy="2" r="1" fill="#99a3a4"/>
+                    </pattern>
+                    
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                        <feOffset dx="2" dy="2" result="offsetblur"/>
+                        <feComponentTransfer>
+                            <feFuncA type="linear" slope="0.3"/>
+                        </feComponentTransfer>
+                        <feMerge> 
+                            <feMergeNode/>
+                            <feMergeNode in="SourceGraphic"/> 
+                        </feMerge>
+                    </filter>
+                </defs>
+            `;
+
+            // 3. ENTORNO
+            const TOPSOIL_H = 150;
+            svg += `<rect x="0" y="${SURFACE_H}" width="${BASE_WIDTH}" height="${TOPSOIL_H}" fill="url(#patSoil)"/>`;
+            svg += `<rect x="0" y="${SURFACE_H + TOPSOIL_H}" width="${BASE_WIDTH}" height="${TOTAL_HEIGHT - SURFACE_H - TOPSOIL_H}" fill="url(#patRock)"/>`;
+            svg += `<rect x="0" y="${SURFACE_H}" width="${BASE_WIDTH}" height="${TOTAL_HEIGHT - SURFACE_H}" fill="url(#geoGrad)" style="mix-blend-mode: multiply;"/>`;
+            svg += `<line x1="0" y1="${SURFACE_H + TOPSOIL_H}" x2="${BASE_WIDTH}" y2="${SURFACE_H + TOPSOIL_H}" stroke="#5d4037" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>`;
+            svg += `<rect x="0" y="0" width="${BASE_WIDTH}" height="${SURFACE_H}" fill="url(#skyGrad)"/>`;
+            
+            // Nubes
+            const cloud = (cx, cy) => `
+                <g opacity="0.45" fill="#ffffff">
+                    <ellipse cx="${cx}" cy="${cy}" rx="50" ry="30"/>
+                    <ellipse cx="${cx+30}" cy="${cy-10}" rx="60" ry="35"/>
+                    <ellipse cx="${cx-30}" cy="${cy+10}" rx="50" ry="25"/>
+                </g>
+            `;
+            svg += cloud(150, 80);
+            svg += cloud(700, 100);
+            svg += `<rect x="0" y="${SURFACE_H - 4}" width="${BASE_WIDTH}" height="6" fill="#5d4037"/>`;
+            svg += `<line x1="0" y1="${SURFACE_H}" x2="${BASE_WIDTH}" y2="${SURFACE_H}" stroke="#3e2723" stroke-width="2"/>`;
+
+            // CASING
+            svg += `<rect x="${WELL_X - CASING_WIDTH/2 - 20}" y="${SURFACE_H}" width="${CASING_WIDTH + 40}" height="${TOTAL_HEIGHT - SURFACE_H}" fill="url(#cementPat)" stroke="#7f8c8d" stroke-width="1"/>`;
+            svg += `<rect x="${WELL_X - CASING_WIDTH/2}" y="${SURFACE_H}" width="${CASING_WIDTH}" height="${TOTAL_HEIGHT - SURFACE_H}" fill="#ffffff"/>`;
+            
+            // ----------------------------------------------------
+            // ZONA DE DISPAROS
+            // ----------------------------------------------------
+            const PERF_TOP = PERF_Y - 20;
+            const PERF_LEN = 140; 
+            svg += `<rect x="0" y="${PERF_TOP}" width="${BASE_WIDTH}" height="${PERF_LEN}" fill="#fcf3cf" fill-opacity="0.4"/>`;
+            const DASH = "4,2";
+            svg += `<line x1="0" y1="${PERF_TOP}" x2="${BASE_WIDTH}" y2="${PERF_TOP}" stroke="#d35400" stroke-width="1" stroke-dasharray="${DASH}" opacity="0.8"/>`;
+            svg += `<line x1="0" y1="${PERF_TOP + PERF_LEN}" x2="${BASE_WIDTH}" y2="${PERF_TOP + PERF_LEN}" stroke="#d35400" stroke-width="1" stroke-dasharray="${DASH}" opacity="0.8"/>`;
+
+            const rows = 5;
+            const rowSpacing = PERF_LEN / (rows + 1);
+            for(let i=1; i<=rows; i++) {
+                let y = PERF_TOP + (i * rowSpacing);
+                const coneLen = 70;
+                const coneBaseH = 10;
+                const lxBase = WELL_X - CASING_WIDTH/2;
+                const lxTip = lxBase - coneLen;
+                svg += `<polygon points="${lxBase},${y-coneBaseH/2} ${lxBase},${y+coneBaseH/2} ${lxTip},${y}" fill="#1f2a33" opacity="0.85"/>`;
+                const rxBase = WELL_X + CASING_WIDTH/2;
+                const rxTip = rxBase + coneLen;
+                svg += `<polygon points="${rxBase},${y-coneBaseH/2} ${rxBase},${y+coneBaseH/2} ${rxTip},${y}" fill="#1f2a33" opacity="0.85"/>`;
+            }
+             svg += `<text x="40" y="${PERF_TOP + PERF_LEN/2}" transform="rotate(-90 40 ${PERF_TOP + PERF_LEN/2})" text-anchor="middle" font-size="12" font-weight="bold" fill="#d35400" letter-spacing="1">ZONA PRODUCTORA</text>`;
+             svg += `<g transform="translate(${WELL_X + CASING_WIDTH/2 + 120}, ${PERF_TOP + PERF_LEN/2})">
+                        <line x1="-10" y1="0" x2="-80" y2="0" stroke="#2c3e50" stroke-width="1" stroke-dasharray="2,2"/>
+                        <circle cx="-80" cy="0" r="2" fill="#2c3e50"/>
+                        <text x="0" y="4" font-size="11" font-weight="bold" fill="#154360">INTERVALO CAÑONEADO</text>
+                    </g>`;
+
+            // FLUIDO (CON BURBUJAS MEJORADAS)
+            if (FLUID_Y < TOTAL_HEIGHT) {
+                const fluidH = TOTAL_HEIGHT - FLUID_Y;
+                svg += `<rect x="${WELL_X - CASING_WIDTH/2 + 2}" y="${FLUID_Y}" width="${CASING_WIDTH - 4}" height="${fluidH}" fill="#3498db" fill-opacity="0.3"/>`;
+                
+                let bubbleSeed = 123;
+                const random = () => { bubbleSeed = (bubbleSeed * 9301 + 49297) % 233280; return bubbleSeed / 233280; };
+                
+                // MÁS BURBUJAS: PETRÓLEO, GAS Y ARENA
+                const bubbleCount = 70; 
+                for(let i=0; i<bubbleCount; i++) { 
+                    let bx = (WELL_X - CASING_WIDTH/2 + 15) + random() * (CASING_WIDTH - 30);
+                    let by = FLUID_Y + 30 + random() * (fluidH - 80);
+                    
+                    let typeRand = random();
+
+                    if(by < TOTAL_HEIGHT - RAT_HOLE) {
+                        if (typeRand < 0.45) {
+                            // OIL (Petróleo) - Oscuro y brillante
+                            let br = 3 + random() * 5;
+                            svg += `<circle cx="${bx}" cy="${by}" r="${br}" fill="#1c2833" opacity="0.9"/>`;
+                            svg += `<circle cx="${bx - br*0.3}" cy="${by - br*0.3}" r="${br*0.25}" fill="white" opacity="0.4"/>`;
+                        } else if (typeRand < 0.8) {
+                            // GAS - Claro y translúcido
+                            let br = 2 + random() * 4;
+                            svg += `<circle cx="${bx}" cy="${by}" r="${br}" fill="#e0f7fa" stroke="#b2ebf2" stroke-width="0.5" opacity="0.6"/>`;
+                        } else {
+                            // ARENA (Sólidos) - Pequeños y marrones
+                            let br = 1.5 + random() * 1.5;
+                            svg += `<circle cx="${bx}" cy="${by}" r="${br}" fill="#a1887f" opacity="0.9"/>`;
+                        }
+                    }
+                }
+
+                svg += `<line x1="${WELL_X - CASING_WIDTH/2}" y1="${FLUID_Y}" x2="${WELL_X + CASING_WIDTH/2}" y2="${FLUID_Y}" stroke="#2980b9" stroke-width="2" stroke-dasharray="5,3"/>`;
+                
+                // Dynamic Level Box
+                let pipBoxY = FLUID_Y;
+                const pumpStart = PUMP_Y;
+                const safetyMargin = 60;
+                
+                if (FLUID_Y > pumpStart - safetyMargin && FLUID_Y < pumpStart + 100) {
+                    pipBoxY = pumpStart - 60;
+                }
+                
+                const pipOriginX = WELL_X + CASING_WIDTH/2;
+                const pipTargetX = CALLOUT_ALIGN_X;
+
+                svg += `<g filter="url(#shadow)">`;
+                svg += `<path d="M${pipOriginX} ${FLUID_Y} L${pipTargetX - 20} ${pipBoxY} L${pipTargetX} ${pipBoxY}" stroke="#2c3e50" stroke-width="1" stroke-dasharray="3,2" fill="none"/>`;
+                svg += `<circle cx="${pipOriginX}" cy="${FLUID_Y}" r="3" fill="#2980b9"/>`;
+                svg += `<g transform="translate(${pipTargetX}, ${pipBoxY - 22})">`;
+                svg += `<rect width="${CALLOUT_WIDTH}" height="44" rx="4" fill="#ffffff" stroke="#bdc3c7" stroke-width="1"/>`;
+                svg += `<rect width="6" height="44" rx="2" fill="#2980b9" transform="translate(0,0)"/>`;
+                svg += `<text x="14" y="16" font-size="12" font-weight="bold" fill="#2c3e50">Nivel de Fluido</text>`;
+                svg += `<text x="14" y="32" font-size="11" fill="#7f8c8d">PIP ≈ ${PIP_PSI} psi</text>`;
+                svg += `</g>`; 
+                svg += `</g>`; 
+            }
+
+            svg += `<line x1="${WELL_X - CASING_WIDTH/2}" y1="${SURFACE_H}" x2="${WELL_X - CASING_WIDTH/2}" y2="${TOTAL_HEIGHT}" stroke="#2c3e50" stroke-width="4"/>`;
+            svg += `<line x1="${WELL_X + CASING_WIDTH/2}" y1="${SURFACE_H}" x2="${WELL_X + CASING_WIDTH/2}" y2="${TOTAL_HEIGHT}" stroke="#2c3e50" stroke-width="4"/>`;
+            svg += `<rect x="${WELL_X - CASING_WIDTH/2}" y="${TOTAL_HEIGHT - RAT_HOLE + 20}" width="${CASING_WIDTH}" height="${RAT_HOLE - 20}" fill="#566573" opacity="0.8"/>`;
+            
+            // 4. SUPERFICIE
+            const WH_X = WELL_X;
+            const WH_Y = SURFACE_H;
+            svg += `<rect x="${WH_X - 60}" y="${WH_Y - 15}" width="120" height="15" fill="#333" stroke="#111" rx="2"/>`;
+            for(let i=-50; i<=50; i+=20) svg += `<circle cx="${WH_X + i}" cy="${WH_Y - 7}" r="2.5" fill="#bbb"/>`;
+            svg += `<rect x="${WH_X - 25}" y="${WH_Y - 115}" width="50" height="100" fill="url(#whRedGrad)" stroke="#7b241c" stroke-width="1"/>`;
+            svg += `<rect x="${WH_X - 60}" y="${WH_Y - 90}" width="35" height="12" fill="url(#whRedGrad)" stroke="#7b241c"/>`;
+            svg += `<circle cx="${WH_X - 60}" cy="${WH_Y - 84}" r="14" fill="url(#whRedGrad)" stroke="#521d1d" stroke-width="2"/>`; 
+            svg += `<circle cx="${WH_X - 60}" cy="${WH_Y - 84}" r="4" fill="#333"/>`; 
+            svg += `<rect x="${WH_X + 25}" y="${WH_Y - 90}" width="35" height="12" fill="url(#whRedGrad)" stroke="#7b241c"/>`;
+            svg += `<circle cx="${WH_X + 60}" cy="${WH_Y - 84}" r="14" fill="url(#whRedGrad)" stroke="#521d1d" stroke-width="2"/>`;
+            svg += `<circle cx="${WH_X + 60}" cy="${WH_Y - 84}" r="4" fill="#333"/>`;
+            svg += `<circle cx="${WH_X}" cy="${WH_Y - 50}" r="10" fill="#c0392b" stroke="#7b241c" filter="url(#shadow)"/>`;
+            svg += `<rect x="${WH_X - 30}" y="${WH_Y - 130}" width="60" height="15" fill="#333" stroke="#111"/>`;
+            svg += `<rect x="${WH_X - 10}" y="${WH_Y - 140}" width="20" height="10" fill="#555"/>`;
+            svg += `<text x="${WH_X}" y="${WH_Y - 150}" text-anchor="middle" font-size="11" font-weight="bold" fill="#2c3e50">WELLHEAD</text>`;
+
+            const TR_W = 80;
+            const TR_X = WELL_X - 300; 
+            const TR_Y = SURFACE_H - 120;
+            svg += `<g filter="url(#shadow)">`;
+            svg += `<rect x="${TR_X}" y="${TR_Y}" width="${TR_W}" height="100" fill="url(#trafoGrad)" stroke="#2c3e50" stroke-width="1.5" rx="2"/>`;
+            for(let i=1; i<=6; i++) {
+                    let fx = TR_X + (i * (TR_W/7));
+                    svg += `<line x1="${fx}" y1="${TR_Y + 5}" x2="${fx}" y2="${TR_Y + 95}" stroke="#455a64" stroke-width="2"/>`;
+            }
+            svg += `<rect x="${TR_X + 15}" y="${TR_Y - 15}" width="10" height="15" fill="#3e2723"/>`;
+            svg += `<rect x="${TR_X + 55}" y="${TR_Y - 15}" width="10" height="15" fill="#3e2723"/>`;
+            svg += `<text x="${TR_X + TR_W/2}" y="${TR_Y + 115}" text-anchor="middle" font-size="10" font-weight="bold" fill="#2c3e50">TRANSFORMADOR</text>`;
+            svg += `</g>`;
+
+            const VSD_W = 90;
+            const VSD_X = WELL_X - 180;
+            const VSD_Y = SURFACE_H - 140;
+            svg += `<g filter="url(#shadow)">`;
+            svg += `<rect x="${VSD_X}" y="${VSD_Y}" width="${VSD_W}" height="120" fill="#ecf0f1" stroke="#2c3e50" stroke-width="1.5" rx="2"/>`;
+            svg += `<rect x="${VSD_X + 10}" y="${VSD_Y + 15}" width="70" height="40" rx="2" fill="#145a32" stroke="#2c3e50"/>`;
+            svg += `<text x="${VSD_X + 45}" y="${VSD_Y + 38}" text-anchor="middle" dominant-baseline="middle" font-family="monospace" font-size="14" fill="#58d68d" font-weight="bold">${config.vsdFreq} Hz</text>`;
+            const ledY = VSD_Y + 70;
+            svg += `<circle cx="${VSD_X + 25}" cy="${ledY}" r="4" fill="#c0392b" stroke="#922b21" stroke-width="1"/>`;
+            svg += `<circle cx="${VSD_X + 45}" cy="${ledY}" r="4" fill="#f1c40f" stroke="#b7950b" stroke-width="1"/>`;
+            svg += `<circle cx="${VSD_X + 65}" cy="${ledY}" r="4" fill="#2ecc71" stroke="#239b56" stroke-width="1"/>`;
+            svg += `<line x1="${VSD_X + 10}" y1="${VSD_Y + 95}" x2="${VSD_X + 80}" y2="${VSD_Y + 95}" stroke="#bdc3c7" stroke-width="2"/>`;
+            svg += `<line x1="${VSD_X + 10}" y1="${VSD_Y + 102}" x2="${VSD_X + 80}" y2="${VSD_Y + 102}" stroke="#bdc3c7" stroke-width="2"/>`;
+            svg += `<text x="${VSD_X + VSD_W/2}" y="${VSD_Y + 135}" text-anchor="middle" font-size="10" font-weight="bold" fill="#2c3e50">VSD</text>`;
+            svg += `</g>`;
+            svg += `<path d="M${TR_X + 80} ${TR_Y + 50} L${VSD_X} ${TR_Y + 50}" stroke="#2c3e50" stroke-width="3"/>`;
+            svg += `<path d="M${VSD_X + 90} ${VSD_Y + 80} L${WH_X - 45} ${VSD_Y + 80} L${WH_X - 45} ${WH_Y - 20}" stroke="${CABLE_COLOR}" stroke-width="${CABLE_W * 0.7}" fill="none"/>`;
+
+            // 5. TUBING
+            svg += `<rect x="${WELL_X - TUBING_WIDTH/2}" y="${SURFACE_H}" width="${TUBING_WIDTH}" height="${TUBING_END_Y - SURFACE_H}" fill="url(#metalGrad)" stroke="#2c3e50"/>`;
+            for(let y=SURFACE_H+100; y<TUBING_END_Y; y+=100) {
+                svg += `<rect x="${WELL_X - TUBING_WIDTH/2 - 2}" y="${y}" width="${TUBING_WIDTH + 4}" height="6" fill="#546e7a" stroke="#2c3e50" />`;
+            }
+
+            // 6. CABLE POTENCIA
+            const CABLE_CENTER_X = WELL_X + TUBING_WIDTH/2 + CABLE_W/2;
+            
+            // --- Y-TOOL CORRECTA ---
+            if (config.yTool) {
+                // Cuerpo Y-Tool Rediseñado (Geometría Unificada)
+                // Usamos un path que conecta el tubing al inicio de la bomba y al bypass
+                // Sin cortes
+                svg += `<path d="M${WELL_X - TUBING_WIDTH/2} ${TUBING_END_Y} 
+                                 L${WELL_X + TUBING_WIDTH/2} ${TUBING_END_Y} 
+                                 Q${WELL_X + 20} ${TUBING_END_Y + 20} ${WELL_X + 50} ${TUBING_END_Y + 60} 
+                                 L${WELL_X + 50} ${TUBING_END_Y + 90} 
+                                 L${WELL_X + 30} ${TUBING_END_Y + 90} 
+                                 L${WELL_X + 30} ${TUBING_END_Y + 60}
+                                 L${WELL_X + 15} ${TUBING_END_Y + 50}
+                                 L${WELL_X + 15} ${TUBING_END_Y + 90} 
+                                 L${WELL_X - 15} ${TUBING_END_Y + 90}
+                                 L${WELL_X - 15} ${TUBING_END_Y + 50}
+                                 Q${WELL_X - 20} ${TUBING_END_Y + 20} ${WELL_X - TUBING_WIDTH/2} ${TUBING_END_Y}
+                                 Z"
+                        fill="url(#metalGrad)" stroke="#2c3e50" filter="url(#shadow)"/>`;
+                
+                // Tubo Bypass paralelo
+                const bypassTopY = TUBING_END_Y + 90;
+                const bypassLen = ESP_BOTTOM - bypassTopY; 
+                svg += `<rect x="${WELL_X+30}" y="${bypassTopY}" width="20" height="${bypassLen}" fill="url(#metalGrad)" stroke="#2c3e50"/>`;
+
+                // Clamps SOLO en el bypass
+                for (let y = bypassTopY + 80; y < bypassTopY + bypassLen; y += 140) {
+                    svg += `<rect x="${WELL_X+27}" y="${y}" width="26" height="8" rx="2" fill="#7f8c8d" stroke="#2c3e50"/>`;
+                }
+                
+                // Cable recto simple
+                svg += `<line x1="${CABLE_CENTER_X}" y1="${SURFACE_H}" x2="${CABLE_CENTER_X}" y2="${PUMP_Y + 20}" stroke="${CABLE_COLOR}" stroke-width="${CABLE_W}"/>`;
+            } else {
+                // Standard Cable
+                 svg += `<line x1="${CABLE_CENTER_X}" y1="${SURFACE_H}" x2="${CABLE_CENTER_X}" y2="${PUMP_Y + 20}" stroke="${CABLE_COLOR}" stroke-width="${CABLE_W}" stroke-linecap="butt"/>`;
+                 // Cable Guard Removed as per request
+            }
+
+            // 9. EQUIPO ESP
+            // Ajustamos el offset vertical si hay Y-Tool para que no quede pegado
+            // YTOOL_HEIGHT + YTOOL_GAP ya está en ESP_START_Y, así que renderizamos en las coordenadas calculadas
+            svg += `<g transform="translate(${WELL_X}, 0)" filter="url(#shadow)">`;
+
+            // BOMBAS (Tandem logic)
+            let currentPumpY = PUMP_Y;
+            
+            // 1. Upper Pump
+            if (config.stagesUpper > 0) {
+                 svg += `<rect x="${-ESP_WIDTH/2}" y="${currentPumpY}" width="${ESP_WIDTH}" height="${PUMP_UPPER_H}" fill="url(#metalGrad)" stroke="#2c3e50"/>`;
+                 const stageStep = PUMP_UPPER_H / 10;
+                 for(let i=1; i<10; i++) {
+                     svg += `<line x1="${-ESP_WIDTH/2}" y1="${currentPumpY + i*stageStep}" x2="${ESP_WIDTH/2}" y2="${currentPumpY + i*stageStep}" stroke="#7f8c8d" opacity="0.5"/>`;
+                 }
+                 // TEXTO INTERNO ELIMINADO
+                 currentPumpY += PUMP_UPPER_H;
+            }
+
+            // Gap
+            if (config.stagesUpper > 0 && config.stagesLower > 0) {
+                svg += `<rect x="${-ESP_WIDTH/2 + 5}" y="${currentPumpY}" width="${ESP_WIDTH - 10}" height="${PUMP_GAP}" fill="#2c3e50"/>`;
+                currentPumpY += PUMP_GAP;
+            }
+
+            // 2. Lower Pump
+            if (config.stagesLower > 0) {
+                 svg += `<rect x="${-ESP_WIDTH/2}" y="${currentPumpY}" width="${ESP_WIDTH}" height="${PUMP_LOWER_H}" fill="url(#metalGrad)" stroke="#2c3e50"/>`;
+                 const stageStep = PUMP_LOWER_H / 10;
+                 for(let i=1; i<10; i++) {
+                     svg += `<line x1="${-ESP_WIDTH/2}" y1="${currentPumpY + i*stageStep}" x2="${ESP_WIDTH/2}" y2="${currentPumpY + i*stageStep}" stroke="#7f8c8d" opacity="0.5"/>`;
+                 }
+                 // TEXTO INTERNO ELIMINADO
+                 currentPumpY += PUMP_LOWER_H;
+            }
+
+            // INTAKE
+            svg += `<rect x="${-ESP_WIDTH/2 + 2}" y="${INTAKE_Y}" width="${ESP_WIDTH - 4}" height="${INTAKE_H}" fill="#b0bec5" stroke="#2c3e50"/>`;
+            svg += `<defs><pattern id="intakeMesh" width="4" height="4" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#333"/></pattern></defs>`;
+            svg += `<rect x="${-ESP_WIDTH/2 + 6}" y="${INTAKE_Y + 8}" width="${ESP_WIDTH - 12}" height="${INTAKE_H - 16}" fill="url(#intakeMesh)"/>`;
+
+            // SECCIÓN DE SELLOS
+            svg += `<rect x="${-ESP_WIDTH/2 + 3}" y="${SEAL_Y}" width="${ESP_WIDTH - 6}" height="${SEAL_SECTION_H}" fill="url(#sealGrad)" stroke="#2c3e50"/>`;
+            svg += `<line x1="${-ESP_WIDTH/2}" y1="${SEAL_Y + SEAL_SECTION_H/2}" x2="${ESP_WIDTH/2}" y2="${SEAL_Y + SEAL_SECTION_H/2}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`;
+            svg += `<rect x="${-ESP_WIDTH/2 - 2}" y="${SEAL_Y + SEAL_SECTION_H - 4}" width="${ESP_WIDTH + 4}" height="8" fill="#2c3e50" rx="1"/>`;
+            svg += `<rect x="${-ESP_WIDTH/2 + 3}" y="${SEAL_Y + SEAL_SECTION_H + 4}" width="${ESP_WIDTH - 6}" height="${SEAL_SECTION_H - 4}" fill="url(#sealGrad)" stroke="#2c3e50"/>`;
+
+            // MOTOR
+            svg += `<rect x="${-ESP_WIDTH/2}" y="${MOTOR_Y}" width="${ESP_WIDTH}" height="${MOTOR_H}" fill="url(#metalGrad)" stroke="#2c3e50"/>`;
+            if (config.motorType === "PMM") {
+                for(let k=0; k<12; k++) {
+                     svg += `<line x1="${-ESP_WIDTH/2}" y1="${MOTOR_Y + k*(MOTOR_H/12)}" x2="${ESP_WIDTH/2}" y2="${MOTOR_Y + k*(MOTOR_H/12)}" stroke="#2c3e50" opacity="0.1"/>`;
+                }
+            } else {
+                svg += `<line x1="-10" y1="${MOTOR_Y}" x2="-10" y2="${MOTOR_Y + MOTOR_H}" stroke="#2c3e50" opacity="0.2"/>`;
+                svg += `<line x1="10" y1="${MOTOR_Y}" x2="10" y2="${MOTOR_Y + MOTOR_H}" stroke="#2c3e50" opacity="0.2"/>`;
+            }
+            // Mantenemos texto interno del motor por ahora o lo quitamos?
+            // El usuario dijo "Eliminar por completo cualquier etiqueta colocada directamente sobre la carcasa de la bomba". No especificó motor.
+            // Pero para consistencia mejor lo dejo sutil o lo alineo. Lo dejo.
+            svg += `<text x="0" y="${MOTOR_H/2}" transform="rotate(-90 0 ${MOTOR_H/2})" text-anchor="middle" fontSize="12" fontWeight="bold" fill="white">${config.motorType} MOTOR</text>`;
+            svg += `<rect x="${ESP_WIDTH/2 - 14}" y="${MOTOR_Y + 20}" width="20" height="25" fill="#2c3e50" rx="2"/>`;
+            svg += `<circle cx="${ESP_WIDTH/2 - 4}" cy="${MOTOR_Y + 32}" r="3" fill="${CABLE_COLOR}"/>`; 
+
+            // SENSOR
+            if (config.sensor) {
+                svg += `<rect x="${-ESP_WIDTH/2 + 10}" y="${SENSOR_Y}" width="${ESP_WIDTH - 20}" height="10" fill="#2c3e50" />`;
+                svg += `<rect x="${-ESP_WIDTH/2 + 12}" y="${SENSOR_Y+10}" width="${ESP_WIDTH - 24}" height="${SENSOR_H - 25}" fill="url(#metalGrad)" stroke="#2c3e50" />`;
+                for(let k=1; k<=4; k++) {
+                   let gy = SENSOR_Y + 10 + k * ((SENSOR_H - 35)/5);
+                   svg += `<rect x="${-ESP_WIDTH/2 + 12}" y="${gy}" width="${ESP_WIDTH - 24}" height="2" fill="#2c3e50" opacity="0.5"/>`;
+                }
+                svg += `<path d="M${-ESP_WIDTH/2 + 12} ${SENSOR_Y + SENSOR_H - 15} L${ESP_WIDTH/2 - 12} ${SENSOR_Y + SENSOR_H - 15} Q${0} ${SENSOR_Y + SENSOR_H + 5} ${-ESP_WIDTH/2 + 12} ${SENSOR_Y + SENSOR_H - 15}" fill="#7f8c8d" stroke="#2c3e50" />`;
+                svg += `<rect x="${-ESP_WIDTH/2 + 11}" y="${SENSOR_Y + 25}" width="${ESP_WIDTH - 22}" height="8" fill="#f39c12" opacity="0.8"/>`;
+            }
+
+            svg += `</g>`;
+
+            // MLE
+            const MLE_X = WELL_X + ESP_WIDTH/2 + 8;
+            svg += `<rect x="${WELL_X + ESP_WIDTH/2 - 2}" y="${PUMP_Y + 15}" width="16" height="30" fill="#2c3e50" rx="2"/>`; 
+            const POTHEAD_Y = MOTOR_Y + 32;
+            svg += `<path d="M${WELL_X + ESP_WIDTH/2 + 6} ${PUMP_Y + 40} 
+                             L${MLE_X} ${PUMP_Y + 50} 
+                             L${MLE_X} ${POTHEAD_Y} 
+                             L${WELL_X + ESP_WIDTH/2 + 6} ${POTHEAD_Y}" 
+                             stroke="${CABLE_COLOR}" stroke-width="5" fill="none" opacity="0.9"/>`;
+
+            for(let y=PUMP_Y + 70; y < MOTOR_Y; y+=70) {
+                 svg += `<rect x="${WELL_X - ESP_WIDTH/2}" y="${y}" width="${ESP_WIDTH}" height="3" fill="#2c3e50"/>`;
+            }
+
+            // 11. ETIQUETAS EXTERNAS
+            const drawCallout = (y, title, subtitle) => {
+                const boxX = CALLOUT_ALIGN_X;
+                const boxW = CALLOUT_WIDTH; 
+                const boxH = 44;
+                const originX = WELL_X;
+                
+                let el = `<g filter="url(#shadow)">`;
+                el += `<path d="M${originX} ${y} L${boxX - 20} ${y} L${boxX} ${y}" stroke="#2c3e50" stroke-width="1" stroke-dasharray="3,2" fill="none"/>`;
+                el += `<circle cx="${originX}" cy="${y}" r="3" fill="#2c3e50"/>`;
+                el += `<g transform="translate(${boxX}, ${y - boxH/2})">`;
+                el += `<rect width="${boxW}" height="${boxH}" rx="4" fill="#ffffff" stroke="#bdc3c7" stroke-width="1"/>`;
+                el += `<rect width="6" height="${boxH}" rx="2" fill="#2980b9" transform="translate(0,0)"/>`; 
+                el += `<text x="14" y="16" font-size="12" font-weight="bold" fill="#2c3e50" dominant-baseline="hanging">${title}</text>`;
+                el += `<text x="14" y="30" font-size="11" fill="#7f8c8d" dominant-baseline="hanging">${subtitle}</text>`;
+                el += `</g>`;
+                el += `</g>`;
+                return el;
+            };
+
+            // Cálculo de posiciones de etiquetas para evitar superposiciones
+            let currentLabelY = PUMP_Y;
+            
+            // 1. Upper Pump Label
+            if (config.stagesUpper > 0) {
+                 svg += drawCallout(PUMP_Y + PUMP_UPPER_H/2, "Bomba Upper", `Etapas: ${config.stagesUpper}`);
+            }
+
+            // 2. Lower Pump Label
+            if (config.stagesLower > 0) {
+                 let lowerY = PUMP_Y;
+                 if (config.stagesUpper > 0) lowerY += PUMP_UPPER_H + PUMP_GAP;
+                 lowerY += PUMP_LOWER_H/2;
+                 svg += drawCallout(lowerY, "Bomba Lower", `Etapas: ${config.stagesLower}`);
+            }
+
+            // 3. Intake
+            svg += drawCallout(INTAKE_Y + INTAKE_H/2, "Intake / Separador", "Entrada de fluido al sistema");
+            
+            // 4. Sellos
+            svg += drawCallout(SEAL_Y + SEAL_H/2, "Sección de Sellos", "Doble cámara (Upper/Lower)");
+            
+            // 5. Motor
+            const motorName = config.motorType === "AMM" ? "MOTOR AMM" : "MOTOR PMM";
+            svg += drawCallout(MOTOR_Y + MOTOR_H/2, motorName, `${config.motorHp} HP`);
+            
+            // 6. Sensor
+            if(config.sensor) {
+                svg += drawCallout(SENSOR_Y + SENSOR_H/2, "Sensor de Fondo", "Monitoreo P/T/Vibración");
+            }
+
+            svg += `</svg>`;
+            document.getElementById('canvas-container').innerHTML = svg;
+        }
+
+        // --- INICIALIZACIÓN UI ---
+        function initUI() {
+            const on = (id, event, cb) => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener(event, cb);
+            };
+            const setTxt = (id, txt) => {
+                const el = document.getElementById(id);
+                if(el) el.innerText = txt;
+            };
+
+            on('rng-zoom', 'input', e => {
+                config.zoom = e.target.value;
+                setTxt('val-zoom', config.zoom + 'x');
+                renderDiagram();
+            });
+            on('rng-hz', 'input', e => {
+                config.vsdFreq = e.target.value;
+                setTxt('val-hz', config.vsdFreq + ' Hz');
+                renderDiagram();
+            });
+            on('rng-fluid', 'input', e => {
+                config.fluidLevel = parseInt(e.target.value);
+                setTxt('val-fluid', config.fluidLevel + ' %');
+                renderDiagram();
+            });
+            on('rng-pip', 'input', e => {
+                config.pip = parseInt(e.target.value);
+                setTxt('val-pip', config.pip + ' psi');
+                renderDiagram();
+            });
+            on('rng-cable-size', 'input', e => {
+                config.cableSize = parseInt(e.target.value);
+                setTxt('val-cable-size', '#' + config.cableSize);
+                renderDiagram();
+            });
+            on('chk-y-tool', 'change', e => {
+                config.yTool = e.target.checked;
+                renderDiagram();
+            });
+            on('sel-motor-type', 'change', e => {
+                config.motorType = e.target.value;
+                renderDiagram();
+            });
+            on('rng-hp', 'input', e => {
+                config.motorHp = parseInt(e.target.value);
+                setTxt('val-hp', config.motorHp + ' HP');
+                renderDiagram();
+            });
+            on('rng-stages-upper', 'input', e => {
+                config.stagesUpper = parseInt(e.target.value);
+                setTxt('val-stages-upper', config.stagesUpper);
+                renderDiagram();
+            });
+             on('rng-stages-lower', 'input', e => {
+                config.stagesLower = parseInt(e.target.value);
+                setTxt('val-stages-lower', config.stagesLower);
+                renderDiagram();
+            });
+            on('chk-sensor', 'change', e => {
+                config.sensor = e.target.checked;
+                renderDiagram();
+            });
+        }
+
+        window.onload = () => {
+            initUI();
+            renderDiagram();
+        };
+
+    </script>
+</body>
+</html>
